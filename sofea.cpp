@@ -7,6 +7,10 @@
 #include "tools.h"
 
 #include "sofcla.h"
+#include "elem-def/link1.h"
+#include "elem-def/beam3.h"
+#include "elem-def/plane2.h"
+#include "elem-def/plane4.h"
 
 using namespace std;
 
