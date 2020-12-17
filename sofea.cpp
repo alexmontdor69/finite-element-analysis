@@ -15,8 +15,6 @@
 #include "elem-def/plane2.h"
 #include "elem-def/plane4.h"
 
-using namespace std;
-
 //functions declaration
 void display_greetings(void);
 
@@ -75,7 +73,7 @@ int main(int argc, char **argv)
 			auto delimiterPos = line.find(",");
 
 			//Need To parse better To get all information
-			std::string instruction = line.substr(0, delimiterPos);
+			auto instruction = line.substr(0, delimiterPos);
 			auto value = line.substr(delimiterPos + 1);
 
 			// Give the number of Nodes
@@ -83,16 +81,55 @@ int main(int argc, char **argv)
 			{
 				NbNodes = std::stol(value, nullptr, 10);
 				DNodes = new Node[NbNodes + 1];
-				cout << "\n - Total nodes number : " << NbNodes;
+				std::cout << "\n - Total nodes number : " << NbNodes;
 			}
 
 			// Give the number of Elements
 			if (instruction == "ELEM")
 			{
 				NbElems = std::stol(value, nullptr, 10);
-				cout << "\n - Total elements number : " << NbElems;
+				std::cout << "\n - Total elements number : " << NbElems;
 			}
-			/* 
+
+			// Enter in the description of Coordonates of Nodes -> X, Y
+
+			if (instruction == "NBLOCK")
+			{
+				int inc = 0;
+				std::string node_number = "";
+				while (getline(model_file, line) && node_number != "ENDNODEBLOCK")
+				{
+					line.erase(std::remove_if(line.begin(), line.end(), [](char c) {
+								   return std::isspace(static_cast<unsigned char>(c));
+							   }),
+							   line.end());
+					if (line[0] == '#' || line.empty())
+						continue;
+					delimiterPos = line.find(",");
+					//Need To parse better To get all information
+					node_number = line.substr(0, delimiterPos);
+					auto coordonates = line.substr(delimiterPos + 1);
+					if (node_number != "ENDNODEBLOCK")
+					{
+						delimiterPos = coordonates.find(",");
+						std::string x = coordonates.substr(0, delimiterPos);
+						std::string y = coordonates.substr(delimiterPos + 1);
+						DNodes[inc].Init(node_number.c_str(), x, y);
+						std::cout << "\nNode at x:" << x << " y:" << y;
+					}
+					inc++;
+				}
+				/* 				NextWord(file, &Command[0]);
+				inc = 0;
+				while (strcmp("ENDNODEBLOCK", Command) && !::EndOfFile)
+				{
+					DNodes[inc].Init(file);
+					NextWord(file, &Command[0]);
+					inc++;
+				} */
+			}
+		}
+		/* 
 // Enter in the description of Elements -> type of element & elementId, material, cross area, second moment of area / inertia, End Node A, End Node B
 			case ("EBLOCK"): 
 				break;
@@ -103,11 +140,7 @@ int main(int argc, char **argv)
 				break;
 
 
-// Enter in the description of Coordonates of Nodes -> X, Y
-			case "NBLOCK": 
-				break;
-			case "ENDNODEBLOCK":
-				break;
+
 // Description of Material K,v
 			case "MAT": 
 				break;
@@ -128,7 +161,6 @@ int main(int argc, char **argv)
 			case "ENDBDis":
 				break;
 			 */
-		}
 	}
 	else
 	{
@@ -330,14 +362,14 @@ for (inc = 0; inc < count[42]; inc++)
 			Global[inc][inc] = 1e200; */
 
 	/*
-cout<<"\n"<<"Global matrix"<<"\n";
+std::cout<<"\n"<<"Global matrix"<<"\n";
 	// Globlal Matrix display
 for (inc=0; inc<MaxNode;inc++)
 {
 	for (int inc2=0; inc2 <MaxNode ; inc2++)
-		cout<<Global[inc][inc2]
+		std::cout<<Global[inc][inc2]
 			<<"\t";
-	cout<<"\n";
+	std::cout<<"\n";
 }
 */
 	printf("completed!\n");
@@ -356,11 +388,11 @@ for (inc=0; inc<MaxNode;inc++)
 	max = 0;
 	for (inc = 0; inc < NbNodes; inc++)
 	{
-		//	cout<<"\n Node "
+		//	std::cout<<"\n Node "
 		//		<< inc+1;
 		//	for (int inc2=0;inc2 < DNodes[inc].DOF;inc2++)
 		//	{
-		//		cout<<"\n"
+		//		std::cout<<"\n"
 		//			<<Forces[DNodes[inc].CumSum+ inc2];
 		//	}
 		if ((sqrt(pow(Forces[DNodes[inc].CumSum], 2) + pow(Forces[DNodes[inc].CumSum + 1], 2))) > max)
@@ -370,13 +402,13 @@ for (inc=0; inc<MaxNode;inc++)
 		}
 	}
 	printf("completed!\n");
-	cout << "\nThe Greater displacement is : " << max
-		 << " and the Node number of the greater element is : " << num;
+	std::cout << "\nThe Greater displacement is : " << max
+			  << " and the Node number of the greater element is : " << num;
 
-	cout << "\nux = " << Forces[DNodes[num - 1].CumSum]
-		 << " and uy = " << Forces[DNodes[num - 1].CumSum + 1];
+	std::cout << "\nux = " << Forces[DNodes[num - 1].CumSum]
+			  << " and uy = " << Forces[DNodes[num - 1].CumSum + 1];
 
-	cout << "\nThis problem includes " << NbNodes << " nodes and " << NbElems << " elements.\n";
+	std::cout << "\nThis problem includes " << NbNodes << " nodes and " << NbElems << " elements.\n";
 
 	return 0;
 }

@@ -71,7 +71,7 @@ Beam3::Beam3(FILE *file, long Num, Node *DNodes) // function to initialize data 
 {
     char Command[100];
     number = Num;
-    NextWord(file, &Command[0]);
+    /*NextWord(file, &Command[0]);
     sscanf(Command, "%ld", &Mat); // read the material number
     NextWord(file, &Command[0]);
     sscanf(Command, "%le", &Area); // read the area
@@ -81,21 +81,21 @@ Beam3::Beam3(FILE *file, long Num, Node *DNodes) // function to initialize data 
     sscanf(Command, "%ld", &NbLink[0]); // Stiffness matrix
     NextWord(file, &Command[0]);
     sscanf(Command, "%ld", &NbLink[1]);
-    SortNumber(&NbLink[0], 2);
+    SortNumber(&NbLink[0], 2);*/
 
     DefineNodeDOF(DNodes);
 }
 
 void Beam3::Display(int m)
 {
-    cout << "\n Element : "
-         << m + 1
-         << "\n";
+    std::cout << "\n Element : "
+              << m + 1
+              << "\n";
     for (int inc = 0; inc < 6; inc++)
     {
         for (int in = 0; in < 6; in++)
-            cout << StiffMat[inc][in] << "      ";
-        cout << "\n";
+            std::cout << StiffMat[inc][in] << "      ";
+        std::cout << "\n";
     }
 }
 

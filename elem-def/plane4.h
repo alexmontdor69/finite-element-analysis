@@ -158,13 +158,13 @@ Plane42::Plane42(FILE *file, long Num, Node *DNodes) // function to initialize d
     char Command[100];
 
     number = Num;
-    NextWord(file, &Command[0]);
+    // NextWord(file, &Command[0]);
     sscanf(Command, "%ld", &Mat); // read the material number
                                   //	NextWord(file,&Command[0]);
                                   //	sscanf(Command,"%le", &Thickness);		// read the thickness
     for (int inc = 0; inc < 4; inc++)
     {
-        NextWord(file, &Command[0]);
+        // NextWord(file, &Command[0]);
         sscanf(Command, "%ld", &NbLink[inc]); // Stiffness matrix
     }
 

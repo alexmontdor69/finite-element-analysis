@@ -121,17 +121,17 @@ Plane2::Plane2(FILE *file, long Num, Node *DNodes) // function to initialize dat
 {
     char Command[100];
     number = Num;
-    NextWord(file, &Command[0]);
+    // NextWord(file, &Command[0]);
     sscanf(Command, "%ld", &Mat); // read the material number
-    NextWord(file, &Command[0]);
+    // NextWord(file, &Command[0]);
     sscanf(Command, "%le", &Area); // read the area
-    NextWord(file, &Command[0]);
+    // NextWord(file, &Command[0]);
     sscanf(Command, "%le", &Izz); // read the moment of inertia
-    NextWord(file, &Command[0]);
+    // NextWord(file, &Command[0]);
     sscanf(Command, "%le", &Thickness); // read the thickness
     for (int inc = 0; inc < 3; inc++)
     {
-        NextWord(file, &Command[0]);
+        // NextWord(file, &Command[0]);
         sscanf(Command, "%ld", &NbLink[inc]); // Stiffness matrix
     }
 
@@ -147,14 +147,14 @@ Plane2::Plane2(FILE *file, long Num, Node *DNodes) // function to initialize dat
 
 void Plane2::Display(int m)
 {
-    cout << "\n Element : "
-         << m + 1
-         << "\n";
+    std::cout << "\n Element : "
+              << m + 1
+              << "\n";
     for (int inc = 0; inc < 6; inc++)
     {
         for (int in = 0; in < 6; in++)
-            cout << StiffMat[inc][in] << "      ";
-        cout << "\n";
+            std::cout << StiffMat[inc][in] << "      ";
+        std::cout << "\n";
     }
 }
 
