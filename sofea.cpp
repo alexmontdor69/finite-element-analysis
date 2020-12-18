@@ -50,7 +50,7 @@ int main(int argc, char **argv)
 
 	long NbElems = 0, NbNodes = 0;
 
-	int *indx, DOF_max = 0;
+	int *BDis, DOF_max = 0;
 	long count[256] = {0}, num; // to know how objects created per kind of element
 	double *Forces;
 
@@ -234,9 +234,9 @@ int main(int argc, char **argv)
 
 			if (instruction == "BDis")
 			{
-				indx = new int[DOF_max];
+				BDis = new int[DOF_max];
 				for (int DOF_index = 0; DOF_index < DOF_max; DOF_index++)
-					indx[DOF_index] = 1;
+					BDis[DOF_index] = 1;
 				std::string instruction = "";
 				while (getline(model_file, line) && instruction != "ENDBDis")
 				{
@@ -253,7 +253,7 @@ int main(int argc, char **argv)
 						long node_id = std::stol(instruction, nullptr, 10);
 						long node_index = node_id - 1;
 
-						create_boundary_displacement(data, indx, DNodes, node_index);
+						create_boundary_displacement(data, BDis, DNodes, node_index);
 					}
 				}
 			}
@@ -286,7 +286,7 @@ and sort stuff in specific header
 		std::cout << '\n';
 	}
 
-	/* 	std::cout << "\n\n---INDX content----\n\n";
+	/* 	std::cout << "\n\n---BDis content----\n\n";
 	for (int index = 0; index < DOF_max; index++)
 	{
 		std::cout << "\n DOF : " << patch::to_string(index + 1) << " : " << patch::to_string(*(Forces + index)).c_str();
@@ -294,7 +294,7 @@ and sort stuff in specific header
 	}
 	for (int index = 0; index < DOF_max; index++)
 	{
-		std::cout << "\n DOF : " << patch::to_string(index + 1) << " : " << patch::to_string(*(indx + index)).c_str();
+		std::cout << "\n DOF : " << patch::to_string(index + 1) << " : " << patch::to_string(*(BDis + index)).c_str();
 		std::cout << "\n";
 	} */
 
@@ -322,24 +322,40 @@ and sort stuff in specific header
 		DLink1[element_index]->CreateStiffMatrix(DNodes, DMat);
 		DLink1[element_index]->AssembleMatrix(main_matrix, DOF_max, DNodes);
 	}
-	for (element_index = 0; element_index < count[2]; element_index++)
+	for (int element_index = 0; element_index < count[2]; element_index++)
 	{
 		DBeam2[element_index]->CreateStiffMatrix(DNodes, DMat);
 		DBeam2[element_index]->AssembleMatrix(main_matrix, DOF_max, DNodes);
 	}
-	for (element_index = 0; element_index < count[3]; element_index++)
+	for (int element_index = 0; element_index < count[3]; element_index++)
 	{
 		DPlane3[element_index]->CreateStiffMatrix(DNodes, DMat);
 		DPlane3[element_index]->AssembleMatrix(main_matrix, DOF_max, DNodes);
 	}
 
-	for (element_index = 0; element_index < count[4]; element_index++)
+	for (int element_index = 0; element_index < count[4]; element_index++)
 	{
 		DPlane4[element_index]->CreateStiffMatrix(DNodes, DMat);
 		DPlane4[element_index]->AssembleMatrix(main_matrix, DOF_max, DNodes);
 	}
 
-	std::cout << "\nSolving by LU decomposition...\n";
+	/**
+ * Positionning the Boundary displacement constraints
+ * 
+ * It is a "diagonal matrix" 
+ * Node stiffness in the diagonal..
+ * If constraints exists, stiffness is considered infinite (value 1e200)
+ * 
+ * 
+ * */
+	std::cout << "\nAdding Boundary Displacement constraints main Matrix...\n";
+	for (int DOF_index = 0; DOF_index < DOF_max; DOF_index++)
+		if (BDis[DOF_index] == 0)
+			main_matrix[DOF_index][DOF_index] = 1e200;
+
+	std::cout << "\nMain Matric Creation completed!\n";
+	std::cout << "\n----------------------\n\n";
+	std::cout << "\nSolving by LU decomposition...";
 
 	printf("Solving by LU decomposition...");
 	// Solving part______________________________________________________________________________
@@ -347,36 +363,37 @@ and sort stuff in specific header
 	//(unfortunatly deleting them)
 	// First step use the tool header and the Lower Upper Decomposition
 
-	ludcmp(main_matrix, DOF_max, indx, Forces);
+	ludcmp(main_matrix, DOF_max, BDis, Forces);
 
 	// Then let's do a back substitution to get the result
-	lubksb(main_matrix, DOF_max, indx, Forces);
+	lubksb(main_matrix, DOF_max, BDis, Forces);
 
-	printf("completed!\nDisplacements sorting process...");
-	int max = 0;
-	for (int inc = 0; inc < NbNodes; inc++)
+	std::cout << "completed!\n";
+	std::cout << "\n----------------------\n\n";
+	std::cout << "RESULTS\n";
+	std::cout << "Sorting Displacements ...";
+
+	//Forces becomes the array of displacement
+
+	double max_displacement = 0;
+	long max_displaced_node_id;
+	for (long node_index = 0; node_index < NbNodes; node_index++)
 	{
-		//	std::cout<<"\n Node "
-		//		<< inc+1;
-		//	for (int inc2=0;inc2 < DNodes[inc].DOF;inc2++)
-		//	{
-		//		std::cout<<"\n"
-		//			<<Forces[DNodes[inc].absolute_DOF_addr+ inc2];
-		//	}
-		if ((sqrt(pow(Forces[DNodes[inc].absolute_DOF_addr], 2) + pow(Forces[DNodes[inc].absolute_DOF_addr + 1], 2))) > max)
+		if ((sqrt(pow(Forces[DNodes[node_index].absolute_DOF_addr], 2) + pow(Forces[DNodes[node_index].absolute_DOF_addr + 1], 2))) > max_displacement)
 		{
-			max = sqrt(pow(Forces[DNodes[inc].absolute_DOF_addr], 2) + pow(Forces[DNodes[inc].absolute_DOF_addr + 1], 2));
-			num = inc + 1;
+			max_displacement = sqrt(pow(Forces[DNodes[node_index].absolute_DOF_addr], 2) + pow(Forces[DNodes[node_index].absolute_DOF_addr + 1], 2));
+			max_displaced_node_id = node_index + 1;
 		}
 	}
-	printf("completed!\n");
-	std::cout << "\nThe Greater displacement is : " << max
-			  << " and the Node number of the greater element is : " << num;
 
-	std::cout << "\nux = " << Forces[DNodes[num - 1].absolute_DOF_addr]
-			  << " and uy = " << Forces[DNodes[num - 1].absolute_DOF_addr + 1];
+	std::cout << "completed!\n";
+	std::cout << "\n----------------------\n\n";
+	std::cout << "RESULTS\n";
+	std::cout << "\nThe Greater displacement is : " << max_displacement
+			  << " and the Node number of the greater element is : " << max_displaced_node_id;
 
-	std::cout << "\nThis problem includes " << NbNodes << " nodes and " << NbElems << " elements.\n";
+	std::cout << "\nux = " << Forces[DNodes[max_displaced_node_id - 1].absolute_DOF_addr]
+			  << " and uy = " << Forces[DNodes[max_displaced_node_id - 1].absolute_DOF_addr + 1];
 
 	return 0;
 }

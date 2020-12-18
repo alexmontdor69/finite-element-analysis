@@ -29,7 +29,7 @@ void create_boundary_forces(const std::string &initial_data, double *Forces, Nod
     }
 }
 
-void create_boundary_displacement(const std::string &initial_data, int *indx, Node *DNodes, long node_index)
+void create_boundary_displacement(const std::string &initial_data, int *BDis, Node *DNodes, long node_index)
 {
     std::string data = initial_data;
     int delimiterPos = 0;
@@ -38,7 +38,7 @@ void create_boundary_displacement(const std::string &initial_data, int *indx, No
     {
         std::string value = data.substr(0, delimiterPos);
         data = data.substr(delimiterPos + 1);
-        indx[DNodes[node_index].absolute_DOF_addr + DOF_Node_index] = std::stoi(value, nullptr, 10); // indx cest les contraintes ?
+        BDis[DNodes[node_index].absolute_DOF_addr + DOF_Node_index] = std::stoi(value, nullptr, 10); // BDis cest les contraintes ?
         delimiterPos = data.find(",");
     }
 }

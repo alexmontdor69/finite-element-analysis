@@ -18,10 +18,10 @@ EBLOCK
 #ET give the type of element
 ET,1
 # Descrition of the element : elementId, material, cross area, End Node A, End Node B
-3,1,10,1,2
+3,1,1000,1,2
 
 ET,2
-# Descrition of the element : elementId, mat,cross area, second moment of area / inertia, node, node
+# Descrition of the element : elementId, material, cross area, second moment of area / inertia, node, node
 1,1,5000,1000000,3,2
 2,1,5000,1000000,4,3
 ENDEBLOCK
@@ -33,7 +33,7 @@ EMAT
 
 #Forces description : #node, fx, fy, momentz
 BForces
-3,0,-200,0
+3,1000,-2000,0
 ENDBForces
 
 #Displacement description : #node, u, v, rotz ; 0 = blocked, 1=available

@@ -161,7 +161,7 @@ void free_imatrix(int **m, int nrl, int nrh, int ncl, int nch)
 /* LU Decomposition of a matrix */
 /* From Numerical Recipes in C  */
 /********************************/
-void ludcmp(double **a, long n, int *indx, double *d)
+void ludcmp(double **a, long n, int *BDis, double *d)
 {
     int i, imax, j, k;
     double big, dum, sum, temp;
@@ -212,7 +212,7 @@ void ludcmp(double **a, long n, int *indx, double *d)
             *d = -(*d);
             vv[imax - 1] = vv[j - 1];
         }
-        indx[j - 1] = imax;
+        BDis[j - 1] = imax;
         if (a[j - 1][j - 1] == 0.0)
             a[j - 1][j - 1] = TINY;
         if (j != n)
@@ -226,14 +226,14 @@ void ludcmp(double **a, long n, int *indx, double *d)
 }
 
 /**************************************/
-void lubksb(double **a, long n, int *indx, double *b)
+void lubksb(double **a, long n, int *BDis, double *b)
 {
     int i, ii = 0, ip, j;
     double sum;
 
     for (i = 1; i <= n; i++)
     {
-        ip = indx[i - 1];
+        ip = BDis[i - 1];
         sum = b[ip - 1];
         b[ip - 1] = b[i - 1];
         if (ii)
@@ -253,7 +253,7 @@ void lubksb(double **a, long n, int *indx, double *b)
 }
 
 /*****************************************/
-void mprove(double **a, double **alud, int n, int *indx, double *b, double *x)
+void mprove(double **a, double **alud, int n, int *BDis, double *b, double *x)
 {
     int i, j;
     double sdp;
@@ -266,24 +266,24 @@ void mprove(double **a, double **alud, int n, int *indx, double *b, double *x)
             sdp += a[i][j] * x[j];
         r[i] = sdp;
     }
-    lubksb(alud, n, indx, r);
+    lubksb(alud, n, BDis, r);
     for (i = 1; i <= n; i++)
         x[i] -= r[i];
     free_dvector(r, 1, n);
 }
 
 /*****************************/
-void invert_matrix(double **g, double **h, int n, int *indx, double *col, double *d)
+void invert_matrix(double **g, double **h, int n, int *BDis, double *col, double *d)
 {
     int i, j;
     /* Invert "g" matrix return result in "h" matrix*/
-    ludcmp(g, n, indx, d);
+    ludcmp(g, n, BDis, d);
     for (j = 1; j <= n; j++)
     {
         for (i = 1; i <= n; i++)
             col[i - 1] = 0.0;
         col[j - 1] = 1.0;
-        lubksb(g, n, indx, col);
+        lubksb(g, n, BDis, col);
         for (i = 1; i <= n; i++)
             h[i - 1][j - 1] = col[i - 1];
     }
