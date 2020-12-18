@@ -14,6 +14,7 @@ private:
     long Mat; // Material
     long R;   // Real (for cross section area)
 
+    double Area;           //equivalent of R ? Check on the calculation
     double Angle;          // Angle between the x-axis and the bar
     double Length;         // lenght of the bar
     double StiffMat[4][4]; // Stiffness Matrix dim = 2
@@ -35,21 +36,25 @@ public:
 Link1::Link1(long element_id, const std::string &values, Node *DNodes)
 {
     id = element_id;
+    std::string data = "";
 
     int delimiterPos = values.find(",");
     std::string mat = values.substr(0, delimiterPos);
+    data = values.substr(delimiterPos + 1);
     Mat = std::stol(mat, nullptr, 10);
-    delimiterPos = values.find(",", delimiterPos + 1);
+    delimiterPos = data.find(",");
 
-    std::string cross_area = values.substr(delimiterPos + 1);
-    R = std::stol(cross_area, nullptr, 10);
-    delimiterPos = values.find(",", delimiterPos + 1);
+    std::string cross_area = data.substr(0, delimiterPos);
+    data = data.substr(delimiterPos + 1);
+    Area = std::atol(cross_area.c_str());
+    delimiterPos = data.find(",");
 
     for (int index = 0; index < nb_nodes; index++)
     {
-        std::string node_id = values.substr(delimiterPos + 1);
+        std::string node_id = data.substr(0, delimiterPos);
+        data = data.substr(delimiterPos + 1);
         node_ids[index] = std::stol(node_id, nullptr, 10);
-        delimiterPos = values.find(",", delimiterPos + 1);
+        delimiterPos = data.find(",");
     }
 
     SortNumber(&node_ids[0], nb_nodes);
@@ -102,7 +107,7 @@ void Link1::AssembleMatrix(double **Global, int MaxDOF, Node *DNodes)
         for (int inc2 = 0; inc2 < 2; inc2++)     // step for row (matrix 2x2)
             for (int inc3 = 0; inc3 < 2; inc3++) // step for line
                 for (int inc4 = 0; inc4 < 2; inc4++)
-                    Global[(DNodes[(node_ids[inc] - 1)].CumSum + inc3)][(DNodes[node_ids[inc2] - 1].CumSum + inc4)] += StiffMat[(inc * 2) + inc3][(inc2 * 2) + inc4];
+                    Global[(DNodes[(node_ids[inc] - 1)].absolute_DOF_addr + inc3)][(DNodes[node_ids[inc2] - 1].absolute_DOF_addr + inc4)] += StiffMat[(inc * 2) + inc3][(inc2 * 2) + inc4];
 }
 
 void Link1::DefineNodeDOF(Node *DNodes)

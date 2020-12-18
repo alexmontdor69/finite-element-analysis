@@ -183,7 +183,7 @@ void Plane4::AssembleMatrix(double **Global, int MaxDOF, Node *DNodes)
             for (int inc3 = 0; inc3 < 2; inc3++)     // step for line (row) (2 DOF)
                 for (int inc4 = 0; inc4 < 2; inc4++) // step for line (column) (2 DOF)
                 {
-                    Global[(DNodes[(node_ids[inc] - 1)].CumSum + inc3)][(DNodes[node_ids[inc2] - 1].CumSum + inc4)] += StiffMat[(inc * 2) + inc3][(inc2 * 2) + inc4];
+                    Global[(DNodes[(node_ids[inc] - 1)].absolute_DOF_addr + inc3)][(DNodes[node_ids[inc2] - 1].absolute_DOF_addr + inc4)] += StiffMat[(inc * 2) + inc3][(inc2 * 2) + inc4];
                     inc4 = inc4;
                 }
 }

@@ -28,22 +28,23 @@ void SortNumber(long *NbLink, int index)
 
 class Node
 {
-public:			   // Caution No private because couldn't use some other function!!
-				   // So to change
-	long number;   // What's the node's name ?
-	double nx, ny; // Nodes Coordonates
-	long DOF;	   // Number of DOF for this node
-	long CumSum;   // "Adress" in the vectors.
+public:						// Caution No private because couldn't use some other function!!
+							// So to change
+	long id;				// What's the node's name ?
+	double nx, ny;			// Nodes Coordonates
+	long DOF = 2;			// Number of DOF for this node
+	long absolute_DOF_addr; // Absolute address fo the DOF
+
 	void Init(const char *node_id, const std::string &pos_x, const std::string &pos_y);
 };
 
 void Node::Init(const char *node_id, const std::string &pos_x, const std::string &pos_y) // function to initialize data during the file reading
 {
-	number = std::atol(node_id);
-	nx = std::stol(pos_x, nullptr, 10);
-	ny = std::stol(pos_y, nullptr, 10);
+	id = std::stol(node_id, nullptr, 10);
+	nx = std::atol(pos_x.c_str());
+	ny = std::atol(pos_y.c_str());
 	DOF = 0;
-	CumSum = 0;
+	absolute_DOF_addr = 0;
 }
 
 //----------Material----------------------------------------------------------

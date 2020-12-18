@@ -27,25 +27,30 @@ public:
 Beam2::Beam2(long element_id, const std::string &values, Node *DNodes) // function to initialize data during the file reading
 {
     id = element_id;
+    std::string data = "";
 
     int delimiterPos = values.find(",");
     std::string mat = values.substr(0, delimiterPos);
+    data = values.substr(delimiterPos + 1);
     Mat = std::stol(mat, nullptr, 10);
-    delimiterPos = values.find(",", delimiterPos + 1);
+    delimiterPos = data.find(",");
 
-    std::string cross_area = values.substr(delimiterPos + 1);
+    std::string cross_area = data.substr(0, delimiterPos);
+    data = data.substr(delimiterPos + 1);
     Area = std::atol(cross_area.c_str());
-    delimiterPos = values.find(",", delimiterPos + 1);
+    delimiterPos = data.find(",");
 
-    std::string moment_inertia_z = values.substr(delimiterPos + 1);
+    std::string moment_inertia_z = data.substr(0, delimiterPos);
+    data = data.substr(delimiterPos + 1);
     Izz = std::atol(moment_inertia_z.c_str());
-    delimiterPos = values.find(",", delimiterPos + 1);
+    delimiterPos = data.find(",");
 
     for (int index = 0; index < nb_nodes; index++)
     {
-        std::string node_id = values.substr(delimiterPos + 1);
+        std::string node_id = data.substr(0, delimiterPos);
+        data = data.substr(delimiterPos + 1);
         node_ids[index] = std::stol(node_id, nullptr, 10);
-        delimiterPos = values.find(",", delimiterPos + 1);
+        delimiterPos = data.find(",");
     }
 
     DefineNodeDOF(DNodes);
@@ -117,7 +122,7 @@ void Beam2::AssembleMatrix(double **Global, int MaxDOF, Node *DNodes)
         for (int inc2 = 0; inc2 < 2; inc2++)         // step for row (4 matrices 3x3)
             for (int inc3 = 0; inc3 < 3; inc3++)     // step for line (row)
                 for (int inc4 = 0; inc4 < 3; inc4++) // step for line (column)
-                    Global[(DNodes[(node_ids[inc] - 1)].CumSum + inc3)][(DNodes[node_ids[inc2] - 1].CumSum + inc4)] += StiffMat[(inc * 3) + inc3][(inc2 * 3) + inc4];
+                    Global[(DNodes[(node_ids[inc] - 1)].absolute_DOF_addr + inc3)][(DNodes[node_ids[inc2] - 1].absolute_DOF_addr + inc4)] += StiffMat[(inc * 3) + inc3][(inc2 * 3) + inc4];
 }
 
 void Beam2::DefineNodeDOF(Node *DNodes)

@@ -20,7 +20,7 @@ ET,1
 # Descrition of the element : elementId, material, cross area, End Node A, End Node B
 3,1,10,1,2
 
-ET,3
+ET,2
 # Descrition of the element : elementId, mat,cross area, second moment of area / inertia, node, node
 1,1,5000,1000000,3,2
 2,1,5000,1000000,4,3
@@ -40,4 +40,4 @@ ENDBForces
 BDis
 1,0,0
 4,0,0,0
-ENDDis
+ENDBDis
