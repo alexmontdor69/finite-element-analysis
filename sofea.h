@@ -1,5 +1,18 @@
 // sofcla.h
 // headers to define all the class use in sofea.cpp
+#include <string>
+#include <sstream>
+
+namespace patch
+{
+template <typename T>
+std::string to_string(const T &n)
+{
+	std::ostringstream stm;
+	stm << n;
+	return stm.str();
+}
+} // namespace patch
 
 int EndOfFile = 0;
 
