@@ -1,3 +1,9 @@
+/**
+ * 	FEA solver 2020 
+ * Finite Element Solver
+ *  
+ * */
+
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -15,11 +21,6 @@
 #include "elem-def/beam2.h"
 #include "elem-def/plane3.h"
 #include "elem-def/plane4.h"
-
-//functions declaration
-void display_greetings(void);
-
-// Parsing functions
 
 int main(int argc, char **argv)
 {
@@ -43,16 +44,19 @@ int main(int argc, char **argv)
 	/*
 	* Optimization possible if we pre-read the file and create the exact amount of element
 	*/
-	Link1 *DLink1[300];
-	Beam2 *DBeam2[3000];
-	Plane3 *DPlane3[3000];
-	Plane4 *DPlane4[3000];
+	long element_size = 300;
+	Link1 *DLink1[element_size];
+	Beam2 *DBeam2[element_size];
+	Plane3 *DPlane3[element_size];
+	Plane4 *DPlane4[element_size];
 
 	long NbElems = 0, NbNodes = 0;
 
-	int *BDis, DOF_max = 0;
-	long count[256] = {0}, num; // to know how objects created per kind of element
-	double *Forces, *Displacements;
+	int *BDis,		 // Array of Boundary displacement
+		DOF_max = 0; // Degree of Freedom Max in the project
+
+	long count[256] = {0}, num;		// element counter per element type
+	double *Forces, *Displacements; // Array for Forces and Displacement related to the model
 
 	// Function to read the file
 	// Function to build the matrix
@@ -395,11 +399,4 @@ and sort stuff in specific header
 			  << " and uy = " << Forces[DNodes[max_displaced_node_id - 1].absolute_DOF_addr + 1];
 
 	return 0;
-}
-
-void display_greetings(void)
-{
-	// Greetings
-	std::cout << "\nWELCOME TO SOFEA";
-	std::cout << "\n----------------\n\n";
 }

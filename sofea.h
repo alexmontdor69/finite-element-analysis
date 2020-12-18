@@ -14,6 +14,13 @@ std::string to_string(const T &n)
 }
 } // namespace patch
 
+void display_greetings(void)
+{
+	// Greetings
+	std::cout << "\nWELCOME TO SOFEA";
+	std::cout << "\n----------------\n\n";
+}
+
 void SortNumber(long *NbLink, int index)
 {
 	int Temp;
