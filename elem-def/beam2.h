@@ -19,9 +19,9 @@ private:
     double StiffMat[6][6]; // Stiffness Matrix dim = 3 (3*2Nodes)
 public:
     Beam2(long element_id, const std::string &values, Node *DNodes);
-    void CalculateLength(Node *DNodes, Material *DMat);
+    void CreateStiffMatrix(Node *DNodes, Material *DMat);
     void Display(int m);
-    void AssembleMatrix(double **Global, int MaxDOF, Node *DNodes);
+    void AssembleMatrix(double **main_matrix, int DOF_max, Node *DNodes);
     void DefineNodeDOF(Node *DNodes);
 };
 Beam2::Beam2(long element_id, const std::string &values, Node *DNodes) // function to initialize data during the file reading
@@ -55,14 +55,15 @@ Beam2::Beam2(long element_id, const std::string &values, Node *DNodes) // functi
 
     DefineNodeDOF(DNodes);
 }
-void Beam2::CalculateLength(Node *DNodes, Material *DMat)
+void Beam2::CreateStiffMatrix(Node *DNodes, Material *DMat)
 {
     double CosA, SinA;
-    double A, B, K, M, F, G, P, H, Q, Z; // some variables
+    double A, B, K, M, F, G, P, H, Q, Z; // Temp Variable to make calculation
     Length = sqrt(pow(((DNodes[(node_ids[0] - 1)].nx) - (DNodes[(node_ids[1] - 1)].nx)), 2) + pow((DNodes[(node_ids[0] - 1)].ny) - (DNodes[(node_ids[1] - 1)].ny), 2));
     CosA = ((DNodes[(node_ids[0] - 1)].nx) - (DNodes[(node_ids[1] - 1)].nx)) / Length;
     SinA = ((DNodes[(node_ids[0] - 1)].ny) - (DNodes[(node_ids[1] - 1)].ny)) / Length;
     Angle = acos(CosA) * 180 / PI;
+
     EL = DMat[(Mat - 1)].ex / Length; // E/L ratio Young modulus over the length
     //Previous Calculations : Check them 'cos I'm not sure of the result...
     A = 4 * EL * Izz; //A=Area Pense que ce n'est pas bon du tout;
@@ -115,14 +116,14 @@ void Beam2::Display(int m)
     }
 }
 
-void Beam2::AssembleMatrix(double **Global, int MaxDOF, Node *DNodes)
+void Beam2::AssembleMatrix(double **main_matrix, int DOF_max, Node *DNodes)
 {
-    // Function which assemble the Matrix !
-    for (int inc = 0; inc < 2; inc++)                //step for column (4 matrices 3x3)
-        for (int inc2 = 0; inc2 < 2; inc2++)         // step for row (4 matrices 3x3)
-            for (int inc3 = 0; inc3 < 3; inc3++)     // step for line (row)
-                for (int inc4 = 0; inc4 < 3; inc4++) // step for line (column)
-                    Global[(DNodes[(node_ids[inc] - 1)].absolute_DOF_addr + inc3)][(DNodes[node_ids[inc2] - 1].absolute_DOF_addr + inc4)] += StiffMat[(inc * 3) + inc3][(inc2 * 3) + inc4];
+
+    for (int inode1 = 0; inode1 < 2; inode1++)          //step for 2 Nodes
+        for (int inode2 = 0; inode2 < 2; inode2++)      //step for 2 Nodes
+            for (int iDOF1 = 0; iDOF1 < 3; iDOF1++)     // for all 2 DOF
+                for (int iDOF2 = 0; iDOF2 < 3; iDOF2++) // for all 2 DOF
+                    main_matrix[(DNodes[(node_ids[inode1] - 1)].absolute_DOF_addr + iDOF1)][(DNodes[node_ids[inode2] - 1].absolute_DOF_addr + iDOF2)] += StiffMat[(inode1 * 3) + iDOF1][(inode2 * 3) + iDOF2];
 }
 
 void Beam2::DefineNodeDOF(Node *DNodes)

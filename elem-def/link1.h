@@ -20,9 +20,9 @@ private:
     double StiffMat[4][4]; // Stiffness Matrix dim = 2
 public:
     Link1(long element_id, const std::string &values, Node *DNodes);
-    void CalculateLength(Node *DNodes, Material *DMat);
+    void CreateStiffMatrix(Node *DNodes, Material *DMat);
     void Display(int m);
-    void AssembleMatrix(double **Global, int MaxDOF, Node *DNodes);
+    void AssembleMatrix(double **main_matrix, int DOF_max, Node *DNodes);
     void DefineNodeDOF(Node *DNodes);
 };
 
@@ -60,14 +60,16 @@ Link1::Link1(long element_id, const std::string &values, Node *DNodes)
     SortNumber(&node_ids[0], nb_nodes);
     DefineNodeDOF(DNodes);
 }
-void Link1::CalculateLength(Node *DNodes, Material *DMat)
+void Link1::CreateStiffMatrix(Node *DNodes, Material *DMat)
 {
 
     double CosA, SinA;
+
     Length = sqrt(pow(((DNodes[(node_ids[0] - 1)].nx) - (DNodes[(node_ids[1] - 1)].nx)), 2) + pow((DNodes[(node_ids[0] - 1)].ny) - (DNodes[(node_ids[1] - 1)].ny), 2));
     CosA = ((DNodes[(node_ids[0] - 1)].nx) - (DNodes[(node_ids[1] - 1)].nx)) / Length;
     SinA = ((DNodes[(node_ids[0] - 1)].ny) - (DNodes[(node_ids[1] - 1)].ny)) / Length;
     Angle = acos(CosA) * 180 / PI;
+
     StiffMat[0][0] = DMat[(Mat - 1)].ex / Length * pow(CosA, 2);
     StiffMat[0][1] = DMat[(Mat - 1)].ex / Length * SinA * CosA;
     StiffMat[0][2] = -StiffMat[0][0];
@@ -99,15 +101,15 @@ void Link1::Display(int m)
     }
 }
 
-void Link1::AssembleMatrix(double **Global, int MaxDOF, Node *DNodes)
+void Link1::AssembleMatrix(double **main_matrix, int DOF_max, Node *DNodes)
 {
     // Function which assemble the Matrix !
 
-    for (int inc = 0; inc < 2; inc++)            //step for column (matrix 2x2)
-        for (int inc2 = 0; inc2 < 2; inc2++)     // step for row (matrix 2x2)
-            for (int inc3 = 0; inc3 < 2; inc3++) // step for line
-                for (int inc4 = 0; inc4 < 2; inc4++)
-                    Global[(DNodes[(node_ids[inc] - 1)].absolute_DOF_addr + inc3)][(DNodes[node_ids[inc2] - 1].absolute_DOF_addr + inc4)] += StiffMat[(inc * 2) + inc3][(inc2 * 2) + inc4];
+    for (int inode1 = 0; inode1 < 2; inode1++)          //step for 2 Nodes
+        for (int inode2 = 0; inode2 < 2; inode2++)      // step for 2 Nodes
+            for (int iDOF1 = 0; iDOF1 < 2; iDOF1++)     // for all 2 DOF
+                for (int iDOF2 = 0; iDOF2 < 2; iDOF2++) // for all 2 DOF
+                    main_matrix[(DNodes[(node_ids[inode1] - 1)].absolute_DOF_addr + iDOF1)][(DNodes[node_ids[inode2] - 1].absolute_DOF_addr + iDOF2)] += StiffMat[(inode1 * 2) + iDOF1][(inode2 * 2) + iDOF2];
 }
 
 void Link1::DefineNodeDOF(Node *DNodes)

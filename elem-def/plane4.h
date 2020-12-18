@@ -19,8 +19,8 @@ private:
 
 public:
     Plane4(long element_id, const std::string &values, Node *DNodes);
-    void CalculateMatrix(Node *DNodes, Material *DMat);
-    void AssembleMatrix(double **Global, int MaxDOF, Node *DNodes);
+    void CreateStiffMatrix(Node *DNodes, Material *DMat);
+    void AssembleMatrix(double **main_matrix, int DOF_max, Node *DNodes);
 };
 
 Plane4::Plane4(long element_id, const std::string &values, Node *DNodes) // function to initialize data during the file reading
@@ -51,7 +51,7 @@ Plane4::Plane4(long element_id, const std::string &values, Node *DNodes) // func
                            // as forces or displacements
 }
 
-void Plane4::CalculateMatrix(Node *DNodes, Material *DMat)
+void Plane4::CreateStiffMatrix(Node *DNodes, Material *DMat)
 {
     double Coordonate[2], Jacobian[2][2], JacDet, Temp;
     double EMatrixConst;
@@ -175,18 +175,16 @@ void Plane4::CalculateMatrix(Node *DNodes, Material *DMat)
             StiffMat[inc3][inc4] = temp02[inc3][inc4];
 }
 
-void Plane4::AssembleMatrix(double **Global, int MaxDOF, Node *DNodes)
+void Plane4::AssembleMatrix(double **main_matrix, int DOF_max, Node *DNodes)
 {
-    // Function which assemble the Matrix !
-    for (int inc = 0; inc < 4; inc++)                //step for column (3 Nodes 2x2)
-        for (int inc2 = 0; inc2 < 4; inc2++)         // step for row (3 Nodes 2x2)
-            for (int inc3 = 0; inc3 < 2; inc3++)     // step for line (row) (2 DOF)
-                for (int inc4 = 0; inc4 < 2; inc4++) // step for line (column) (2 DOF)
-                {
-                    Global[(DNodes[(node_ids[inc] - 1)].absolute_DOF_addr + inc3)][(DNodes[node_ids[inc2] - 1].absolute_DOF_addr + inc4)] += StiffMat[(inc * 2) + inc3][(inc2 * 2) + inc4];
-                    inc4 = inc4;
-                }
+
+    for (int inode1 = 0; inode1 < 4; inode1++)          //step for column (matrix 2x2)
+        for (int inode2 = 0; inode2 < 4; inode2++)      // step for row (matrix 2x2)
+            for (int iDOF1 = 0; iDOF1 < 2; iDOF1++)     // for all 2 DOF
+                for (int iDOF2 = 0; iDOF2 < 2; iDOF2++) // for all 2 DOF
+                    main_matrix[(DNodes[(node_ids[inode1] - 1)].absolute_DOF_addr + iDOF1)][(DNodes[node_ids[inode2] - 1].absolute_DOF_addr + iDOF2)] += StiffMat[(inode1 * 2) + iDOF1][(inode2 * 2) + iDOF2];
 }
+
 void Plane4::DefineNodeDOF(Node *DNodes)
 {
     for (int inc = 0; inc < 4; inc++)

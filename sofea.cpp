@@ -286,7 +286,7 @@ and sort stuff in specific header
 		std::cout << '\n';
 	}
 
-	std::cout << "\n\n---INDX content----\n\n";
+	/* 	std::cout << "\n\n---INDX content----\n\n";
 	for (int index = 0; index < DOF_max; index++)
 	{
 		std::cout << "\n DOF : " << patch::to_string(index + 1) << " : " << patch::to_string(*(Forces + index)).c_str();
@@ -296,20 +296,61 @@ and sort stuff in specific header
 	{
 		std::cout << "\n DOF : " << patch::to_string(index + 1) << " : " << patch::to_string(*(indx + index)).c_str();
 		std::cout << "\n";
+	} */
+
+	std::cout << "\nParsing completed!\n";
+
+	std::cout << "\n----------------------\n\n";
+
+	std::cout << "\nAssemble Matrices...\n";
+	std::cout << "\nBuilding main Matrix...\n";
+
+	// main_matrix : square matrix with DOF_max side length
+	double **main_matrix = new double *[DOF_max];
+	for (int DOF_index = 0; DOF_index < DOF_max; DOF_index++)
+		main_matrix[DOF_index] = new double[DOF_max];
+
+	// Initialization of main_matrix Matrix
+	for (int index_line = 0; index_line < DOF_max; index_line++)
+		for (int index_row = 0; index_row < DOF_max; index_row++)
+			main_matrix[index_line][index_row] = 0;
+
+	//Filling main matrix
+	// Assemble Matrix
+	for (int element_index = 0; element_index < count[1]; element_index++)
+	{
+		DLink1[element_index]->CreateStiffMatrix(DNodes, DMat);
+		DLink1[element_index]->AssembleMatrix(main_matrix, DOF_max, DNodes);
+	}
+	for (element_index = 0; element_index < count[2]; element_index++)
+	{
+		DBeam2[element_index]->CreateStiffMatrix(DNodes, DMat);
+		DBeam2[element_index]->AssembleMatrix(main_matrix, DOF_max, DNodes);
+	}
+	for (element_index = 0; element_index < count[3]; element_index++)
+	{
+		DPlane3[element_index]->CreateStiffMatrix(DNodes, DMat);
+		DPlane3[element_index]->AssembleMatrix(main_matrix, DOF_max, DNodes);
 	}
 
-	std::cout << "\n\n----------------------\n\n";
-	printf("completed!\n");
+	for (element_index = 0; element_index < count[4]; element_index++)
+	{
+		DPlane4[element_index]->CreateStiffMatrix(DNodes, DMat);
+		DPlane4[element_index]->AssembleMatrix(main_matrix, DOF_max, DNodes);
+	}
+
+	std::cout << "\nSolving by LU decomposition...\n";
+
 	printf("Solving by LU decomposition...");
 	// Solving part______________________________________________________________________________
 	//display the Result the backsubstition put all the result in the Forces vector..
 	//(unfortunatly deleting them)
 	// First step use the tool header and the Lower Upper Decomposition
 
-	//ludcmp(Global, DOF_max, indx, Forces);
+	ludcmp(main_matrix, DOF_max, indx, Forces);
 
 	// Then let's do a back substitution to get the result
-	//lubksb(Global, DOF_max, indx, Forces);
+	lubksb(main_matrix, DOF_max, indx, Forces);
 
 	printf("completed!\nDisplacements sorting process...");
 	int max = 0;
