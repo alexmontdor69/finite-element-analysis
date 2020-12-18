@@ -52,7 +52,7 @@ int main(int argc, char **argv)
 
 	int *BDis, DOF_max = 0;
 	long count[256] = {0}, num; // to know how objects created per kind of element
-	double *Forces;
+	double *Forces, *Displacements;
 
 	// Function to read the file
 	// Function to build the matrix
@@ -362,7 +362,6 @@ and sort stuff in specific header
 	//display the Result the backsubstition put all the result in the Forces vector..
 	//(unfortunatly deleting them)
 	// First step use the tool header and the Lower Upper Decomposition
-
 	ludcmp(main_matrix, DOF_max, BDis, Forces);
 
 	// Then let's do a back substitution to get the result
@@ -373,7 +372,7 @@ and sort stuff in specific header
 	std::cout << "RESULTS\n";
 	std::cout << "Sorting Displacements ...";
 
-	//Forces becomes the array of displacement
+	//Forces becomes the array of displacement - Could be fixed
 
 	double max_displacement = 0;
 	long max_displaced_node_id;

@@ -14,8 +14,6 @@ std::string to_string(const T &n)
 }
 } // namespace patch
 
-int EndOfFile = 0;
-
 void SortNumber(long *NbLink, int index)
 {
 	int Temp;
@@ -45,7 +43,7 @@ public:						// Caution No private because couldn't use some other function!!
 							// So to change
 	long id;				// What's the node's name ?
 	double nx, ny;			// Nodes Coordonates
-	long DOF = 2;			// Number of DOF for this node
+	long DOF;				// Number of DOF for this node
 	long absolute_DOF_addr; // Absolute address fo the DOF
 
 	void Init(const char *node_id, const std::string &pos_x, const std::string &pos_y);
@@ -64,7 +62,7 @@ void Node::Init(const char *node_id, const std::string &pos_x, const std::string
 class Material
 {
 public:
-	long number;		// What's the Material's name ?
+	long id;			// What's the Material's name ?
 	double ex, poisson; // Material properties...
 						// ex = Young modulus on x
 						// poisson = Poisson Coef
