@@ -36,7 +36,7 @@ Finite Element Analysis
 
 <code>ET,2</code>
 
-- Descrition of the element : elementId, material, cross area, second moment of area / inertia, node, node
+- Descrition of the element : element Id, material Id, cross area (Area), second moment of area / inertia (Izz), Node Id A, Node Id B
   <code>1,1,5000,1000000,3,2
   2,1,5000,1000000,4,3
   ENDEBLOCK</code>
@@ -46,12 +46,12 @@ Finite Element Analysis
   K,207000
   EMAT</code>
 
-- Forces description : #node, fx, fy, momentz
+- Forces description : Node Id, fx, fy, momentz
   <code>BForces
   3,1000,-2000,0
   ENDBForces</code>
 
-- Displacement description : #node, u, v, rotz ; 0 = blocked, 1=available
+- Displacement description : Node Id, displacement x (u), displacement y (v), rotation z (rotz) ; 0 = blocked, 1=available
   <code>BDis
   1,0,0
   4,0,0,0
