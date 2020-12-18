@@ -4,10 +4,10 @@ Finite Element Analysis
 
 4 basic types of Element
 
-- Link 2D-spar Element
+- Truss Element
 - beam
-- Constant Strain Triangle
-- plane strain 4 nodes
+- place 3 Nodes
+- plane 4 nodes
 
 ## command line
 

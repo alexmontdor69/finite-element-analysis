@@ -1,5 +1,5 @@
 /** 
- * link 1
+ * link 1 : Truss Element
  * 
 */
 
@@ -18,6 +18,7 @@ private:
     double Angle;          // Angle between the x-axis and the bar
     double Length;         // lenght of the bar
     double StiffMat[4][4]; // Stiffness Matrix dim = 2
+
 public:
     Link1(long element_id, const std::string &values, Node *DNodes);
     void CreateStiffMatrix(Node *DNodes, Material *DMat);
@@ -63,19 +64,25 @@ Link1::Link1(long element_id, const std::string &values, Node *DNodes)
 void Link1::CreateStiffMatrix(Node *DNodes, Material *DMat)
 {
 
-    double CosA, SinA;
+    double CosA, SinA, dx, dy;
 
-    Length = sqrt(pow(((DNodes[(node_ids[0] - 1)].nx) - (DNodes[(node_ids[1] - 1)].nx)), 2) + pow((DNodes[(node_ids[0] - 1)].ny) - (DNodes[(node_ids[1] - 1)].ny), 2));
-    CosA = ((DNodes[(node_ids[0] - 1)].nx) - (DNodes[(node_ids[1] - 1)].nx)) / Length;
-    SinA = ((DNodes[(node_ids[0] - 1)].ny) - (DNodes[(node_ids[1] - 1)].ny)) / Length;
+    dx = DNodes[(node_ids[0] - 1)].nx - DNodes[(node_ids[1] - 1)].nx;
+    dy = DNodes[(node_ids[0] - 1)].ny - DNodes[(node_ids[1] - 1)].ny;
+
+    Length = sqrt(pow(dx, 2) + pow(dy, 2));
+    CosA = (dx) / Length;
+    SinA = (dy) / Length;
     Angle = acos(CosA) * 180 / PI;
 
-    StiffMat[0][0] = DMat[(Mat - 1)].ex / Length * pow(CosA, 2);
-    StiffMat[0][1] = DMat[(Mat - 1)].ex / Length * SinA * CosA;
+    // K= A E / L
+    double stiffness = Area * DMat[(Mat - 1)].ex / Length;
+
+    StiffMat[0][0] = stiffness * pow(CosA, 2);
+    StiffMat[0][1] = stiffness * SinA * CosA;
     StiffMat[0][2] = -StiffMat[0][0];
     StiffMat[0][3] = -StiffMat[0][1];
     StiffMat[1][0] = StiffMat[0][1];
-    StiffMat[1][1] = DMat[(Mat - 1)].ex / Length * pow(SinA, 2);
+    StiffMat[1][1] = stiffness * pow(SinA, 2);
     StiffMat[1][2] = -StiffMat[0][1];
     StiffMat[1][3] = -StiffMat[1][1];
     StiffMat[2][0] = -StiffMat[0][0];

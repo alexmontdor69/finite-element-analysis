@@ -65,9 +65,10 @@ void Beam2::CreateStiffMatrix(Node *DNodes, Material *DMat)
     Angle = acos(CosA) * 180 / PI;
 
     EL = DMat[(Mat - 1)].ex / Length; // E/L ratio Young modulus over the length
-    //Previous Calculations : Check them 'cos I'm not sure of the result...
-    A = 4 * EL * Izz; //A=Area Pense que ce n'est pas bon du tout;
-    Z = Area * EL;    // Verify this is the area use instead of A
+
+    // Previous Calculations : Check them 'cos I'm not sure of the result...
+    A = 4 * EL * Izz;
+    Z = Area * EL;
     B = 2 * EL * Izz;
     K = 12 * EL * Izz / Length / Length;
     M = 6 * EL * Izz / Length;
@@ -121,8 +122,8 @@ void Beam2::AssembleMatrix(double **main_matrix, int DOF_max, Node *DNodes)
 
     for (int inode1 = 0; inode1 < 2; inode1++)          //step for 2 Nodes
         for (int inode2 = 0; inode2 < 2; inode2++)      //step for 2 Nodes
-            for (int iDOF1 = 0; iDOF1 < 3; iDOF1++)     // for all 2 DOF
-                for (int iDOF2 = 0; iDOF2 < 3; iDOF2++) // for all 2 DOF
+            for (int iDOF1 = 0; iDOF1 < 3; iDOF1++)     // for all 3 DOF
+                for (int iDOF2 = 0; iDOF2 < 3; iDOF2++) // for all 3 DOF
                     main_matrix[(DNodes[(node_ids[inode1] - 1)].absolute_DOF_addr + iDOF1)][(DNodes[node_ids[inode2] - 1].absolute_DOF_addr + iDOF2)] += StiffMat[(inode1 * 3) + iDOF1][(inode2 * 3) + iDOF2];
 }
 
