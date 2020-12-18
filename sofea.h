@@ -21,14 +21,18 @@ void SortNumber(long *NbLink, int index)
 	}
 }
 
-//-----------NODE--------------------------------------------------------
+/** 
+ * 
+ * 
+*/
+
 class Node
 {
 public:			   // Caution No private because couldn't use some other function!!
 				   // So to change
 	long number;   // What's the node's name ?
 	double nx, ny; // Nodes Coordonates
-	long DOF;	   // Number of DOF for this element
+	long DOF;	   // Number of DOF for this node
 	long CumSum;   // "Adress" in the vectors.
 	void Init(const char *node_id, const std::string &pos_x, const std::string &pos_y);
 };

@@ -1,9 +1,14 @@
-//--------Beam3-----------------------------------------------------------------------
-class Beam3
+/** 
+ * Beam2
+ * 
+*/
+
+class Beam2
 {
 private:
-    long number;           // What's the element's name ?
-    long NbLink[2];        // define how many connection  And see alla bout the array!!
+    long id;
+    int nb_nodes = 2;      // What's the element's name ?
+    long node_ids[2];      // define which node the element he is connected to
     long Mat;              // Material
     long R;                // Real
     double EL;             // EI/L
@@ -13,20 +18,45 @@ private:
     double Length;         // lenght of the bar
     double StiffMat[6][6]; // Stiffness Matrix dim = 3 (3*2Nodes)
 public:
+    Beam2(long element_id, const std::string &values, Node *DNodes);
     void CalculateLength(Node *DNodes, Material *DMat);
-    Beam3(FILE *file, long Num, Node *DNodes);
     void Display(int m);
     void AssembleMatrix(double **Global, int MaxDOF, Node *DNodes);
     void DefineNodeDOF(Node *DNodes);
 };
+Beam2::Beam2(long element_id, const std::string &values, Node *DNodes) // function to initialize data during the file reading
+{
+    id = element_id;
 
-void Beam3::CalculateLength(Node *DNodes, Material *DMat)
+    int delimiterPos = values.find(",");
+    std::string mat = values.substr(0, delimiterPos);
+    Mat = std::stol(mat, nullptr, 10);
+    delimiterPos = values.find(",", delimiterPos + 1);
+
+    std::string cross_area = values.substr(delimiterPos + 1);
+    Area = std::atol(cross_area.c_str());
+    delimiterPos = values.find(",", delimiterPos + 1);
+
+    std::string moment_inertia_z = values.substr(delimiterPos + 1);
+    Izz = std::atol(moment_inertia_z.c_str());
+    delimiterPos = values.find(",", delimiterPos + 1);
+
+    for (int index = 0; index < nb_nodes; index++)
+    {
+        std::string node_id = values.substr(delimiterPos + 1);
+        node_ids[index] = std::stol(node_id, nullptr, 10);
+        delimiterPos = values.find(",", delimiterPos + 1);
+    }
+
+    DefineNodeDOF(DNodes);
+}
+void Beam2::CalculateLength(Node *DNodes, Material *DMat)
 {
     double CosA, SinA;
     double A, B, K, M, F, G, P, H, Q, Z; // some variables
-    Length = sqrt(pow(((DNodes[(NbLink[0] - 1)].nx) - (DNodes[(NbLink[1] - 1)].nx)), 2) + pow((DNodes[(NbLink[0] - 1)].ny) - (DNodes[(NbLink[1] - 1)].ny), 2));
-    CosA = ((DNodes[(NbLink[0] - 1)].nx) - (DNodes[(NbLink[1] - 1)].nx)) / Length;
-    SinA = ((DNodes[(NbLink[0] - 1)].ny) - (DNodes[(NbLink[1] - 1)].ny)) / Length;
+    Length = sqrt(pow(((DNodes[(node_ids[0] - 1)].nx) - (DNodes[(node_ids[1] - 1)].nx)), 2) + pow((DNodes[(node_ids[0] - 1)].ny) - (DNodes[(node_ids[1] - 1)].ny), 2));
+    CosA = ((DNodes[(node_ids[0] - 1)].nx) - (DNodes[(node_ids[1] - 1)].nx)) / Length;
+    SinA = ((DNodes[(node_ids[0] - 1)].ny) - (DNodes[(node_ids[1] - 1)].ny)) / Length;
     Angle = acos(CosA) * 180 / PI;
     EL = DMat[(Mat - 1)].ex / Length; // E/L ratio Young modulus over the length
     //Previous Calculations : Check them 'cos I'm not sure of the result...
@@ -67,26 +97,7 @@ void Beam3::CalculateLength(Node *DNodes, Material *DMat)
             StiffMat[inc2][inc] = StiffMat[inc][inc2]; // coordinate with the definition
 }
 
-Beam3::Beam3(FILE *file, long Num, Node *DNodes) // function to initialize data during the file reading
-{
-    char Command[100];
-    number = Num;
-    /*NextWord(file, &Command[0]);
-    sscanf(Command, "%ld", &Mat); // read the material number
-    NextWord(file, &Command[0]);
-    sscanf(Command, "%le", &Area); // read the area
-    NextWord(file, &Command[0]);
-    sscanf(Command, "%le", &Izz); // read the moment of inertia
-    NextWord(file, &Command[0]);
-    sscanf(Command, "%ld", &NbLink[0]); // Stiffness matrix
-    NextWord(file, &Command[0]);
-    sscanf(Command, "%ld", &NbLink[1]);
-    SortNumber(&NbLink[0], 2);*/
-
-    DefineNodeDOF(DNodes);
-}
-
-void Beam3::Display(int m)
+void Beam2::Display(int m)
 {
     std::cout << "\n Element : "
               << m + 1
@@ -99,19 +110,19 @@ void Beam3::Display(int m)
     }
 }
 
-void Beam3::AssembleMatrix(double **Global, int MaxDOF, Node *DNodes)
+void Beam2::AssembleMatrix(double **Global, int MaxDOF, Node *DNodes)
 {
     // Function which assemble the Matrix !
     for (int inc = 0; inc < 2; inc++)                //step for column (4 matrices 3x3)
         for (int inc2 = 0; inc2 < 2; inc2++)         // step for row (4 matrices 3x3)
             for (int inc3 = 0; inc3 < 3; inc3++)     // step for line (row)
                 for (int inc4 = 0; inc4 < 3; inc4++) // step for line (column)
-                    Global[(DNodes[(NbLink[inc] - 1)].CumSum + inc3)][(DNodes[NbLink[inc2] - 1].CumSum + inc4)] += StiffMat[(inc * 3) + inc3][(inc2 * 3) + inc4];
+                    Global[(DNodes[(node_ids[inc] - 1)].CumSum + inc3)][(DNodes[node_ids[inc2] - 1].CumSum + inc4)] += StiffMat[(inc * 3) + inc3][(inc2 * 3) + inc4];
 }
 
-void Beam3::DefineNodeDOF(Node *DNodes)
+void Beam2::DefineNodeDOF(Node *DNodes)
 {
     for (int inc = 0; inc < 2; inc++)
-        if (!(DNodes[(NbLink[inc] - 1)].DOF > 3))
-            DNodes[(NbLink[inc] - 1)].DOF = 3;
+        if (!(DNodes[(node_ids[inc] - 1)].DOF > 3))
+            DNodes[(node_ids[inc] - 1)].DOF = 3;
 }

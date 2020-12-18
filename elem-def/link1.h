@@ -1,29 +1,67 @@
-//-----------LINK1---------------------------------------------------------
+/** 
+ * link 1
+ * 
+*/
+
 class Link1 // Ansys code for 2D-spar
 {
 private:
-    long number;           // What's the element's name ?
-    long NbLink[2];        // define how many connection  And see alla bout the array!!
-    long Mat;              // Material
-    long R;                // Real
+    long id; // What's the element's name ?
+
+    int nb_nodes = 2; // the element is defined by 'ends' node
+    long node_ids[2]; // define which node the element he is connected to
+
+    long Mat; // Material
+    long R;   // Real (for cross section area)
+
     double Angle;          // Angle between the x-axis and the bar
     double Length;         // lenght of the bar
     double StiffMat[4][4]; // Stiffness Matrix dim = 2
 public:
+    Link1(long element_id, const std::string &values, Node *DNodes);
     void CalculateLength(Node *DNodes, Material *DMat);
-    Link1(FILE *file, long Num, Node *DNodes);
     void Display(int m);
     void AssembleMatrix(double **Global, int MaxDOF, Node *DNodes);
     void DefineNodeDOF(Node *DNodes);
 };
 
+/** 
+ * Initialization of the Link
+ * 
+ * element id  : id of the element in the model
+ * values : series of values obtained in the model file
+ * Node : Array of existing node
+*/
+Link1::Link1(long element_id, const std::string &values, Node *DNodes)
+{
+    id = element_id;
+
+    int delimiterPos = values.find(",");
+    std::string mat = values.substr(0, delimiterPos);
+    Mat = std::stol(mat, nullptr, 10);
+    delimiterPos = values.find(",", delimiterPos + 1);
+
+    std::string cross_area = values.substr(delimiterPos + 1);
+    R = std::stol(cross_area, nullptr, 10);
+    delimiterPos = values.find(",", delimiterPos + 1);
+
+    for (int index = 0; index < nb_nodes; index++)
+    {
+        std::string node_id = values.substr(delimiterPos + 1);
+        node_ids[index] = std::stol(node_id, nullptr, 10);
+        delimiterPos = values.find(",", delimiterPos + 1);
+    }
+
+    SortNumber(&node_ids[0], nb_nodes);
+    DefineNodeDOF(DNodes);
+}
 void Link1::CalculateLength(Node *DNodes, Material *DMat)
 {
 
     double CosA, SinA;
-    Length = sqrt(pow(((DNodes[(NbLink[0] - 1)].nx) - (DNodes[(NbLink[1] - 1)].nx)), 2) + pow((DNodes[(NbLink[0] - 1)].ny) - (DNodes[(NbLink[1] - 1)].ny), 2));
-    CosA = ((DNodes[(NbLink[0] - 1)].nx) - (DNodes[(NbLink[1] - 1)].nx)) / Length;
-    SinA = ((DNodes[(NbLink[0] - 1)].ny) - (DNodes[(NbLink[1] - 1)].ny)) / Length;
+    Length = sqrt(pow(((DNodes[(node_ids[0] - 1)].nx) - (DNodes[(node_ids[1] - 1)].nx)), 2) + pow((DNodes[(node_ids[0] - 1)].ny) - (DNodes[(node_ids[1] - 1)].ny), 2));
+    CosA = ((DNodes[(node_ids[0] - 1)].nx) - (DNodes[(node_ids[1] - 1)].nx)) / Length;
+    SinA = ((DNodes[(node_ids[0] - 1)].ny) - (DNodes[(node_ids[1] - 1)].ny)) / Length;
     Angle = acos(CosA) * 180 / PI;
     StiffMat[0][0] = DMat[(Mat - 1)].ex / Length * pow(CosA, 2);
     StiffMat[0][1] = DMat[(Mat - 1)].ex / Length * SinA * CosA;
@@ -42,25 +80,6 @@ void Link1::CalculateLength(Node *DNodes, Material *DMat)
     StiffMat[3][2] = StiffMat[0][1];
     StiffMat[3][3] = StiffMat[1][1];
 }
-
-Link1::Link1(FILE *file, long Num, Node *DNodes) // function to initialize data during the file reading
-{
-    char Command[100];
-
-    number = Num;
-    /*     NextWord(file, &Command[0]);
-    sscanf(Command, "%ld", &Mat);
-    NextWord(file, &Command[0]);
-    sscanf(Command, "%ld", &R);
-    NextWord(file, &Command[0]);
-    sscanf(Command, "%ld", &NbLink[0]);
-    NextWord(file, &Command[0]);
-    sscanf(Command, "%ld", &NbLink[1]); */
-
-    SortNumber(&NbLink[0], 2);
-    DefineNodeDOF(DNodes);
-}
-
 void Link1::Display(int m)
 {
     std::cout << "\n Element : "
@@ -83,12 +102,12 @@ void Link1::AssembleMatrix(double **Global, int MaxDOF, Node *DNodes)
         for (int inc2 = 0; inc2 < 2; inc2++)     // step for row (matrix 2x2)
             for (int inc3 = 0; inc3 < 2; inc3++) // step for line
                 for (int inc4 = 0; inc4 < 2; inc4++)
-                    Global[(DNodes[(NbLink[inc] - 1)].CumSum + inc3)][(DNodes[NbLink[inc2] - 1].CumSum + inc4)] += StiffMat[(inc * 2) + inc3][(inc2 * 2) + inc4];
+                    Global[(DNodes[(node_ids[inc] - 1)].CumSum + inc3)][(DNodes[node_ids[inc2] - 1].CumSum + inc4)] += StiffMat[(inc * 2) + inc3][(inc2 * 2) + inc4];
 }
 
 void Link1::DefineNodeDOF(Node *DNodes)
 {
-    for (int inc = 0; inc < 2; inc++)
-        if (!(DNodes[(NbLink[inc] - 1)].DOF > 2))
-            DNodes[(NbLink[inc] - 1)].DOF = 2;
+    for (int index = 0; index < nb_nodes; index++)
+        if (!(DNodes[(node_ids[index] - 1)].DOF > 2))
+            DNodes[(node_ids[index] - 1)].DOF = 2;
 }

@@ -9,10 +9,10 @@
 
 #include "tools.h"
 
-#include "sofcla.h"
+#include "sofea.h"
 #include "elem-def/link1.h"
-#include "elem-def/beam3.h"
-#include "elem-def/plane2.h"
+#include "elem-def/beam2.h"
+#include "elem-def/plane3.h"
 #include "elem-def/plane4.h"
 
 //functions declaration
@@ -38,15 +38,15 @@ int main(int argc, char **argv)
 
 	// Init elements
 	Link1 *DLink1[300];
-	Plane2 *DPlane2[3000];
-	Beam3 *DBeam3[3000];
-	Plane42 *DPlane42[3000];
+	Beam2 *DBeam2[3000];
+	Plane3 *DPlane3[3000];
+	Plane4 *DPlane4[3000];
 
 	char Command[100], *ptr;
 
 	long NbElems = 0, NbNodes = 0, Number, NbObjectCreated = 0;
 
-	int inc, countlev1, *indx, MaxNode = 2;
+	int inc, *indx, MaxNode = 2;
 	long count[256] = {0}, num; // to know how objects created per kind of element
 	double *Forces, max;
 	ptr = &Command[0];
@@ -119,18 +119,67 @@ int main(int argc, char **argv)
 					}
 					inc++;
 				}
-				/* 				NextWord(file, &Command[0]);
-				inc = 0;
-				while (strcmp("ENDNODEBLOCK", Command) && !::EndOfFile)
+			}
+			// Enter in the description of Elements -> type of element & elementId, material, cross area, second moment of area / inertia, End Node A, End Node B
+
+			if (instruction == "EBLOCK")
+			{
+				int inc = 0, element_type = 0;
+
+				std::string instruction = "";
+				while (getline(model_file, line) && instruction != "ENDEBLOCK")
 				{
-					DNodes[inc].Init(file);
-					NextWord(file, &Command[0]);
+					line.erase(std::remove_if(line.begin(), line.end(), [](char c) {
+								   return std::isspace(static_cast<unsigned char>(c));
+							   }),
+							   line.end());
+					if (line[0] == '#' || line.empty())
+						continue;
+					delimiterPos = line.find(",");
+					//Need To parse better To get all information
+					instruction = line.substr(0, delimiterPos);
+					std::string data = line.substr(delimiterPos + 1);
+					if (instruction == "ET")
+						element_type = std::stoi(data);
+					// Management of "no element_type value" case
+					if (element_type == 0)
+						std::cout
+							<< "\nERROR : No Element Type written in the model file\n";
+
+					if (instruction != "ENDEBLOCK" && instruction != "ET")
+					{
+						long element_id = std::stol(instruction, nullptr, 10);
+
+						switch (element_type)
+						{
+						case 1: // Link
+
+							DLink1[count[element_type]] = new Link1(element_id, data, DNodes);
+							count[element_type]++;
+							NbObjectCreated++;
+							break;
+						case 3: // Plane 3
+							DPlane3[count[element_type]] = new Plane3(element_id, data, DNodes);
+							count[element_type]++;
+							NbObjectCreated++;
+							break;
+						case 2: // beam 2
+							DBeam2[count[element_type]] = new Beam2(element_id, data, DNodes);
+							count[element_type]++;
+							NbObjectCreated++;
+							break;
+						case 4: // place 4
+							DPlane4[count[element_type]] = new Plane4(element_id, data, DNodes);
+							count[element_type]++;
+							NbObjectCreated++;
+							break;
+						}
+					}
 					inc++;
-				} */
+				}
 			}
 		}
 		/* 
-// Enter in the description of Elements -> type of element & elementId, material, cross area, second moment of area / inertia, End Node A, End Node B
 			case ("EBLOCK"): 
 				break;
 
@@ -167,34 +216,7 @@ int main(int argc, char **argv)
 		std::cout << "\nCan't read " << filename;
 	}
 	/*
-	NextWord(file, &Command[0]);
-	//To know how nodes is there
-	if (!strcmp("NODE", Command) && !::EndOfFile)
-	{
-		NextWord(file, &Command[0]);
-		sscanf(Command, "%ld", &NbNodes);
-		DNodes = new Node[NbNodes + 1];
-	}
-
-	//To know how nodes there is
-	if (!strcmp("ELEM", Command) && !::EndOfFile)
-	{
-		NextWord(file, &Command[0]);
-		sscanf(Command, "%d", &NbElems);
-	}
-
-	// Coordonates of NODE
-	if (!strcmp("NBLOCK", Command) && !::EndOfFile)
-	{
-		NextWord(file, &Command[0]);
-		inc = 0;
-		while (strcmp("ENDNODEBLOCK", Command) && !::EndOfFile)
-		{
-			DNodes[inc].Init(file);
-			NextWord(file, &Command[0]);
-			inc++;
-		}
-	}
+	
 
 	//Coordonates of ELEM
 	if (!strcmp("EBLOCK", Command) && !::EndOfFile)
@@ -216,29 +238,27 @@ int main(int argc, char **argv)
 			// A simple bar : Link1 on Ansys
 			if (countlev1 == 1 && strcmp("ENDEBLOCK", Command) && !::EndOfFile)
 			{
-				DLink1[count[countlev1]] = new Link1(file, Number, DNodes); // Replace by a constructor
-				count[countlev1]++;
-				NbObjectCreated++;
+
 			}
 
 			if (countlev1 == 2 && strcmp("ENDEBLOCK", Command) && !::EndOfFile)
 			{
-				DPlane2[count[countlev1]] = new Plane2(file, Number, DNodes);
+				DPlane3[count[countlev1]] = new Plane3(file, Number, DNodes);
 				count[countlev1]++;
 				NbObjectCreated++;
 			}
 
-			// beam3 !
+			// Beam2 !
 			if (countlev1 == 3 && strcmp("ENDEBLOCK", Command) && !::EndOfFile)
 			{
-				DBeam3[count[countlev1]] = new Beam3(file, Number, DNodes);
+				DBeam2[count[countlev1]] = new Beam2(file, Number, DNodes);
 				count[countlev1]++;
 				NbObjectCreated++;
 			}
-			// Plane42 !
+			// Plane4 !
 			if (countlev1 == 42 && strcmp("ENDEBLOCK", Command) && !::EndOfFile)
 			{
-				DPlane42[count[countlev1]] = new Plane42(file, Number, DNodes);
+				DPlane4[count[countlev1]] = new Plane4(file, Number, DNodes);
 				count[countlev1]++;
 				NbObjectCreated++;
 			}
@@ -340,19 +360,19 @@ for (inc = 0; inc < count[1]; inc++)
 }
 for (inc = 0; inc < count[2]; inc++)
 {
-	DPlane2[inc]->CalculateLength(DNodes, DMat);
-	DPlane2[inc]->AssembleMatrix(Global, MaxNode, DNodes);
+	DPlane3[inc]->CalculateLength(DNodes, DMat);
+	DPlane3[inc]->AssembleMatrix(Global, MaxNode, DNodes);
 }
 
 for (inc = 0; inc < count[3]; inc++)
 {
-	DBeam3[inc]->CalculateLength(DNodes, DMat);
-	DBeam3[inc]->AssembleMatrix(Global, MaxNode, DNodes);
+	DBeam2[inc]->CalculateLength(DNodes, DMat);
+	DBeam2[inc]->AssembleMatrix(Global, MaxNode, DNodes);
 }
 for (inc = 0; inc < count[42]; inc++)
 {
-	DPlane42[inc]->CalculateMatrix(DNodes, DMat);
-	DPlane42[inc]->AssembleMatrix(Global, MaxNode, DNodes);
+	DPlane4[inc]->CalculateMatrix(DNodes, DMat);
+	DPlane4[inc]->AssembleMatrix(Global, MaxNode, DNodes);
 }
 
 // It is a "diagonal matrix" so to implement Ks only on the diagonal so far

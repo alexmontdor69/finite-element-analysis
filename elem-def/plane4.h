@@ -1,21 +1,16 @@
-//--------Plane 42--------------------------------------------------------------------
-//Comment on the Matrices used later on
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//-Plane 42--------------------------------------------------------------------------
+/** 
+ * Plane 4
+ * 4 Nodes
+ * 2 dimension
+ * 
+*/
 
-class Plane42
+class Plane4
 {
 private:
-    long number;
-    long NbLink[4];    // 4 connections
+    long id;
+    int nb_nodes = 4;  // the element is defined by 'ends' node
+    long node_ids[4];  // define which node the element he is connected to
     long Mat;          // Material
     double Thickness;  //Thickness of the element
     double **StiffMat; //
@@ -23,12 +18,40 @@ private:
     void Sort(Node *DNodes);
 
 public:
+    Plane4(long element_id, const std::string &values, Node *DNodes);
     void CalculateMatrix(Node *DNodes, Material *DMat);
-    Plane42(FILE *file, long Num, Node *DNodes);
     void AssembleMatrix(double **Global, int MaxDOF, Node *DNodes);
 };
 
-void Plane42::CalculateMatrix(Node *DNodes, Material *DMat)
+Plane4::Plane4(long element_id, const std::string &values, Node *DNodes) // function to initialize data during the file reading
+{
+    id = element_id;
+
+    int delimiterPos = values.find(",");
+    std::string mat = values.substr(0, delimiterPos);
+    Mat = std::stol(mat, nullptr, 10);
+    delimiterPos = values.find(",", delimiterPos + 1);
+
+    std::string z = values.substr(delimiterPos + 1);
+    Thickness = std::atol(z.c_str());
+    delimiterPos = values.find(",", delimiterPos + 1);
+
+    for (int index = 0; index < nb_nodes; index++)
+    {
+        std::string node_id = values.substr(delimiterPos + 1);
+        node_ids[index] = std::stol(node_id, nullptr, 10);
+        delimiterPos = values.find(",", delimiterPos + 1);
+    }
+
+    StiffMat = new double *[6];
+    for (int inc = 0; inc < 6; inc++) // 6*6
+        StiffMat[inc] = new double[6];
+
+    DefineNodeDOF(DNodes); // To read the boundary conditions
+                           // as forces or displacements
+}
+
+void Plane4::CalculateMatrix(Node *DNodes, Material *DMat)
 {
     double Coordonate[2], Jacobian[2][2], JacDet, Temp;
     double EMatrixConst;
@@ -105,10 +128,10 @@ void Plane42::CalculateMatrix(Node *DNodes, Material *DMat)
 
         for (inc3 = 0; inc3 < 4; inc3++)
         {
-            Jacobian[0][0] += NDerR[inc3] * DNodes[(NbLink[inc3] - 1)].nx;
-            Jacobian[0][1] += NDerS[inc3] * DNodes[(NbLink[inc3] - 1)].nx;
-            Jacobian[1][0] += NDerR[inc3] * DNodes[(NbLink[inc3] - 1)].ny;
-            Jacobian[1][1] += NDerS[inc3] * DNodes[(NbLink[inc3] - 1)].ny;
+            Jacobian[0][0] += NDerR[inc3] * DNodes[(node_ids[inc3] - 1)].nx;
+            Jacobian[0][1] += NDerS[inc3] * DNodes[(node_ids[inc3] - 1)].nx;
+            Jacobian[1][0] += NDerR[inc3] * DNodes[(node_ids[inc3] - 1)].ny;
+            Jacobian[1][1] += NDerS[inc3] * DNodes[(node_ids[inc3] - 1)].ny;
         }
 
         JacDet = Jacobian[0][0] * Jacobian[1][1] - Jacobian[1][0] * Jacobian[0][1];
@@ -152,29 +175,7 @@ void Plane42::CalculateMatrix(Node *DNodes, Material *DMat)
             StiffMat[inc3][inc4] = temp02[inc3][inc4];
 }
 
-Plane42::Plane42(FILE *file, long Num, Node *DNodes) // function to initialize data during the file reading
-{
-
-    char Command[100];
-
-    number = Num;
-    // NextWord(file, &Command[0]);
-    sscanf(Command, "%ld", &Mat); // read the material number
-                                  //	NextWord(file,&Command[0]);
-                                  //	sscanf(Command,"%le", &Thickness);		// read the thickness
-    for (int inc = 0; inc < 4; inc++)
-    {
-        // NextWord(file, &Command[0]);
-        sscanf(Command, "%ld", &NbLink[inc]); // Stiffness matrix
-    }
-
-    // Sort the number of Node
-    //SortNumber (&NbLink[0],6);
-    DefineNodeDOF(DNodes); // To read the boundary conditions
-                           // as forces or displacements
-}
-
-void Plane42::AssembleMatrix(double **Global, int MaxDOF, Node *DNodes)
+void Plane4::AssembleMatrix(double **Global, int MaxDOF, Node *DNodes)
 {
     // Function which assemble the Matrix !
     for (int inc = 0; inc < 4; inc++)                //step for column (3 Nodes 2x2)
@@ -182,18 +183,18 @@ void Plane42::AssembleMatrix(double **Global, int MaxDOF, Node *DNodes)
             for (int inc3 = 0; inc3 < 2; inc3++)     // step for line (row) (2 DOF)
                 for (int inc4 = 0; inc4 < 2; inc4++) // step for line (column) (2 DOF)
                 {
-                    Global[(DNodes[(NbLink[inc] - 1)].CumSum + inc3)][(DNodes[NbLink[inc2] - 1].CumSum + inc4)] += StiffMat[(inc * 2) + inc3][(inc2 * 2) + inc4];
+                    Global[(DNodes[(node_ids[inc] - 1)].CumSum + inc3)][(DNodes[node_ids[inc2] - 1].CumSum + inc4)] += StiffMat[(inc * 2) + inc3][(inc2 * 2) + inc4];
                     inc4 = inc4;
                 }
 }
-void Plane42::DefineNodeDOF(Node *DNodes)
+void Plane4::DefineNodeDOF(Node *DNodes)
 {
     for (int inc = 0; inc < 4; inc++)
-        if (!(DNodes[(NbLink[inc] - 1)].DOF > 2))
-            DNodes[(NbLink[inc] - 1)].DOF = 2;
+        if (!(DNodes[(node_ids[inc] - 1)].DOF > 2))
+            DNodes[(node_ids[inc] - 1)].DOF = 2;
 }
 
-void Plane42::Sort(Node *DNodes)
+void Plane4::Sort(Node *DNodes)
 {
     long Temp;
     double vectorAB[2], vectorBC[2], vectorBD[2], vectorDA[2], vectorCD[2];
@@ -202,47 +203,47 @@ void Plane42::Sort(Node *DNodes)
 	C equiv 2
 	D equiv 3 */
     // vector definition
-    vectorAB[0] = DNodes[(NbLink[0] - 1)].nx - DNodes[(NbLink[1] - 1)].nx;
-    vectorAB[1] = DNodes[(NbLink[0] - 1)].ny - DNodes[(NbLink[1] - 1)].ny;
-    vectorBC[0] = DNodes[(NbLink[1] - 1)].nx - DNodes[(NbLink[2] - 1)].nx;
-    vectorBC[1] = DNodes[(NbLink[1] - 1)].ny - DNodes[(NbLink[2] - 1)].ny;
+    vectorAB[0] = DNodes[(node_ids[0] - 1)].nx - DNodes[(node_ids[1] - 1)].nx;
+    vectorAB[1] = DNodes[(node_ids[0] - 1)].ny - DNodes[(node_ids[1] - 1)].ny;
+    vectorBC[0] = DNodes[(node_ids[1] - 1)].nx - DNodes[(node_ids[2] - 1)].nx;
+    vectorBC[1] = DNodes[(node_ids[1] - 1)].ny - DNodes[(node_ids[2] - 1)].ny;
     //Is C at the right place
     // Exchange C and B
     if ((vectorAB[0] * vectorBC[1] - vectorBC[0] * vectorAB[1]) < 0) // if =0 if ABC is straight
     {
-        Temp = NbLink[1];
-        NbLink[1] = NbLink[2];
-        NbLink[2] = Temp;
+        Temp = node_ids[1];
+        node_ids[1] = node_ids[2];
+        node_ids[2] = Temp;
     }
 
     //Is D at the right place
     //CD^DA
 
-    vectorAB[0] = DNodes[(NbLink[0] - 1)].nx - DNodes[(NbLink[1] - 1)].nx;
-    vectorAB[1] = DNodes[(NbLink[0] - 1)].ny - DNodes[(NbLink[1] - 1)].ny;
-    vectorBD[0] = DNodes[(NbLink[1] - 1)].nx - DNodes[(NbLink[3] - 1)].nx;
-    vectorBD[1] = DNodes[(NbLink[1] - 1)].ny - DNodes[(NbLink[3] - 1)].ny;
-    vectorCD[0] = DNodes[(NbLink[2] - 1)].nx - DNodes[(NbLink[3] - 1)].nx;
-    vectorCD[1] = DNodes[(NbLink[2] - 1)].ny - DNodes[(NbLink[3] - 1)].ny;
-    vectorDA[0] = DNodes[(NbLink[3] - 1)].nx - DNodes[(NbLink[0] - 1)].nx;
-    vectorDA[1] = DNodes[(NbLink[3] - 1)].ny - DNodes[(NbLink[0] - 1)].ny;
+    vectorAB[0] = DNodes[(node_ids[0] - 1)].nx - DNodes[(node_ids[1] - 1)].nx;
+    vectorAB[1] = DNodes[(node_ids[0] - 1)].ny - DNodes[(node_ids[1] - 1)].ny;
+    vectorBD[0] = DNodes[(node_ids[1] - 1)].nx - DNodes[(node_ids[3] - 1)].nx;
+    vectorBD[1] = DNodes[(node_ids[1] - 1)].ny - DNodes[(node_ids[3] - 1)].ny;
+    vectorCD[0] = DNodes[(node_ids[2] - 1)].nx - DNodes[(node_ids[3] - 1)].nx;
+    vectorCD[1] = DNodes[(node_ids[2] - 1)].ny - DNodes[(node_ids[3] - 1)].ny;
+    vectorDA[0] = DNodes[(node_ids[3] - 1)].nx - DNodes[(node_ids[0] - 1)].nx;
+    vectorDA[1] = DNodes[(node_ids[3] - 1)].ny - DNodes[(node_ids[0] - 1)].ny;
 
     if ((vectorCD[0] * vectorDA[1] - vectorDA[0] * vectorCD[1]) < 0) // if =0 if ABC is straight
     {
         //AB^BD
         if ((vectorAB[0] * vectorBD[1] - vectorBD[0] * vectorAB[1]) < 0) // if =0 if ABC is straight
         {
-            Temp = NbLink[1];      // temp takes B value
-            NbLink[1] = NbLink[3]; // B takes D value
-            NbLink[3] = NbLink[2]; // D takes C value
-            NbLink[2] = Temp;      // C takes B value
+            Temp = node_ids[1];        // temp takes B value
+            node_ids[1] = node_ids[3]; // B takes D value
+            node_ids[3] = node_ids[2]; // D takes C value
+            node_ids[2] = Temp;        // C takes B value
         }
         else
         {
             //exchange C and D
-            Temp = NbLink[2];      // temp takes C value
-            NbLink[2] = NbLink[3]; // C takes D value
-            NbLink[3] = Temp;      // D takes C value
+            Temp = node_ids[2];        // temp takes C value
+            node_ids[2] = node_ids[3]; // C takes D value
+            node_ids[3] = Temp;        // D takes C value
         }
     }
 }
